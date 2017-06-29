@@ -1,0 +1,93 @@
+<link rel="import" href="bower_components/polymer/polymer-element.html">
+<link rel="import" href="bower_components/polymer/lib/elements/dom-repeat.html">
+<link rel="import" href="bower_components/paper-dropdown-menu/paper-dropdown-menu-light.html">
+<link rel="import" href="bower_components/paper-listbox/paper-listbox.html">
+<link rel="import" href="bower_components/paper-item/paper-item.html">
+<script src="cookie.js"></script>
+<script src="getElementAt.js"></script>
+
+<dom-module id="camomile-corpus-select">
+
+  <template>
+    <paper-dropdown-menu-light label="Corpus" id="corpus">
+      <paper-listbox slot="dropdown-content" class="dropdown-content" selected="{{corpus}}" attr-for-selected="id">
+        <template is="dom-repeat" items="{{corpora}}">
+          <paper-item id="{{item._id}}">{{item.name}}</paper-item>
+        </template>
+      </paper-listbox>
+    </paper-dropdown-menu-light>
+  </template>
+
+  <script>
+    class CamomileCorpusSelect extends Polymer.Element {
+      static get is() {
+        return "camomile-corpus-select";
+      }
+
+      constructor() {
+        super();
+      }
+
+      _setupCorpora(loginInstance) {
+        this.client = loginInstance.client;
+        this.client.getCorpora()
+          .then(data => {
+            console.log("corpora",data);
+            this.corpora = data;
+
+            setTimeout(() => {
+              const v=getCookie("corpus");
+              if(v!=="") {
+                this.corpus=v;
+              }
+            },0);
+          })
+          .catch(err => {
+            console.log(err);
+          });
+      }
+
+      _resetCorpora() {
+        this.client=null;
+        this.corpora=[];
+        this.corpus=null;
+
+        setCookie("corpus","",0);
+        this.dispatchEvent(new CustomEvent('deselect', {}));
+      }
+
+      ready() {
+        super.ready();
+        const loginInstance = getElementAt(this.srcLogin);
+
+        if(loginInstance.logged_in)
+          this._setupCorpora(loginInstance);
+        loginInstance.addEventListener("login",() => this._setupCorpora(loginInstance));
+        loginInstance.addEventListener("logout", () => this._resetCorpora());
+      }
+
+      selectCorpus(corpus) {
+        console.log("corpus", corpus);
+        return this.dispatchEvent(new CustomEvent('select', {}));
+      }
+
+      _corpusChanged() {
+        setCookie("corpus",this.corpus,10);
+        this.selectCorpus(this.corpus);
+      }
+
+      static get properties() {
+        return {
+          srcLogin: String,
+          id: String,
+          corpus:{
+            type: String,
+            observer:'_corpusChanged'
+          }
+        };
+      }
+    }
+    customElements.define(CamomileCorpusSelect.is, CamomileCorpusSelect);
+  </script>
+
+</dom-module>

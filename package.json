@@ -1,0 +1,32 @@
+{
+  "name": "camomile-polymer-client",
+  "version": "1.0.0",
+  "description": "## Specifications",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "gh-publish": "git checkout gh-pages && git merge master && git rm -rf node_modules bower_components && npm install && bower install && git add -f node_modules bower_components && git commit -m 'publish' ; git push origin gh-pages && git checkout master && npm install && bower install"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rom1504/camomile-polymer-client.git"
+  },
+  "author": "Romain Beaumont <romain.rom1@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/rom1504/camomile-polymer-client/issues"
+  },
+  "homepage": "https://github.com/rom1504/camomile-polymer-client#readme",
+  "dependencies": {
+    "camomile-client": "github:rom1504/camomile-client-javascript#patch-1",
+    "d3": "^4.9.1",
+    "package.json": "^2.0.1",
+    "vis": "^4.20.0",
+    "wavesurfer": "github:rom1504/wavesurfer.js#fork",
+    "wavesurfer.js": "^1.4.0"
+  },
+  "directories": {
+    "lib": "lib"
+  },
+  "devDependencies": {}
+}

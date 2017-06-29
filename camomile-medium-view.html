@@ -1,0 +1,71 @@
+<link rel="import" href="bower_components/polymer/polymer-element.html">
+<script src="getElementAt.js"></script>
+
+<dom-module id="camomile-medium-view">
+
+  <template>
+  </template>
+
+  <script>
+    class CamomileMediumView extends Polymer.Element {
+      static get is() {
+        return "camomile-medium-view";
+      }
+
+      constructor() {
+        super();
+      }
+
+      _setupMedium(mediumInstance) {
+        this.medium=mediumInstance.medium;
+        this.client=mediumInstance.client;
+        this.medium_url = this.client.getMediumURL(mediumInstance.medium, this.format);
+        this.dispatchEvent(new CustomEvent('ready', {}));
+      }
+
+      publish(id,ev,data) {
+        // publish
+        const self=this;
+        self[ev]=data;
+        this.dispatchEvent(new CustomEvent(ev,{detail:{sender:id,data:data}}));
+      }
+
+      subscribe(id,ev,cb) {
+        // subscribe
+        this.addEventListener(ev,({detail:{sender,data}}) => {
+          if(id===sender)
+            return;
+          cb(data);
+        })
+      }
+
+      _resetMedium() {
+        this.medium=null;
+        this.medium_url="";
+        this.client=null;
+        this.dispatchEvent(new CustomEvent('reset', {}));
+      }
+
+      ready() {
+        super.ready();
+
+        const mediumInstance = getElementAt(this.srcMedium);
+
+        if(mediumInstance.medium)
+          this._setupMedium(mediumInstance);
+        mediumInstance.addEventListener("select", () => this._setupMedium(mediumInstance));
+        mediumInstance.addEventListener("deselect", () => this._resetMedium());
+      }
+
+      static get properties() {
+        return {
+          srcMedium: String,
+          format: String,
+          id: String
+        };
+      }
+    }
+    customElements.define(CamomileMediumView.is, CamomileMediumView);
+  </script>
+
+</dom-module>

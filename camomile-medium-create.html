@@ -1,0 +1,78 @@
+<link rel="import" href="bower_components/polymer/polymer-element.html">
+<link rel="import" href="src/shared-styles.html">
+<script src="getElementAt.js"></script>
+
+<dom-module id="camomile-medium-create">
+
+  <template>
+    <style include="shared-styles">
+      :host {
+        display: block;
+        padding: 10px;
+      }
+    </style>
+    <div class="card">
+      <h2>Medium creation</h2>
+      <form>
+        <paper-input label="Name" type="text" id="name" required></paper-input>
+        <paper-input label="Url" type="text" id="url" required></paper-input>
+        <paper-input label="Description" type="text" id="description" required></paper-input>
+        <paper-button raised class="indigo" on-click="create">Create</paper-button>
+      </form>
+      {{creation_status}}
+    </div>
+  </template>
+
+  <script>
+    class CamomileMediumCreate extends Polymer.Element {
+      static get is() {
+        return "camomile-medium-create";
+      }
+
+      constructor() {
+        super();
+      }
+
+      _setupCorpus(corpusInstance) {
+        this.client = corpusInstance.client;
+        this.corpus = corpusInstance.corpus;
+      }
+
+      _resetCorpus() {
+        this.client = null;
+        this.corpus=null;
+      }
+
+      ready() {
+        super.ready();
+
+        const corpusInstance = getElementAt(this.srcCorpus);
+
+        if(corpusInstance.corpus)
+          this._setupCorpus(corpusInstance);
+        corpusInstance.addEventListener("select", () => this._setupCorpus(corpusInstance));
+
+        corpusInstance.addEventListener("deselect", () => this._resetCorpus());
+      }
+
+      create(e) {
+        e.preventDefault();
+        this.client.createMedium(this.corpus,this.$.name.value,this.$.url.value,this.$.description.value)
+          .then(() => this.creation_status="Creation succeeded.")
+          .catch(e => {
+            this.creation_status="Creation failed : "+e.message;
+            console.log(e)
+          });
+      }
+
+      static get properties() {
+        return {
+          srcCorpus: String,
+          id: String
+        };
+      }
+    }
+    customElements.define(CamomileMediumCreate.is, CamomileMediumCreate);
+  </script>
+
+</dom-module>

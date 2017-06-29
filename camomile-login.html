@@ -1,0 +1,101 @@
+<script src="./lib/camomile.js"></script>
+
+<link rel="import" href="bower_components/polymer/polymer-element.html">
+<link rel="import" href="bower_components/polymer/lib/elements/dom-if.html">
+<link rel="import" href="bower_components/paper-button/paper-button.html">
+<link rel="import" href="bower_components/paper-input/paper-input.html">
+<script src="getElementAt.js"></script>
+
+<dom-module id="camomile-login">
+  <template>
+    <style is="custom-style">
+      :host {
+        display:block;
+      }
+    </style>
+    <template is="dom-if" if="{{!logged_in}}">
+      <paper-input style="--paper-input-container-color: white; --paper-input-container-input-color: white; display:inline-block" label="User" type="text" id="user" required></paper-input>
+      <paper-input style="--paper-input-container-color: white; --paper-input-container-input-color: white; display:inline-block" label="Password" type="password" id="password" required></paper-input>
+      <paper-button raised class="indigo" on-click="login">Login</paper-button>
+    </template>
+    <template is="dom-if" if="{{logged_in}}">
+      {{username}}
+      <paper-button raised class="indigo" on-click="logout">Logout</paper-button>
+    </template>
+    {{login_status}}
+  </template>
+
+  <script>
+    class CamomileLogin extends Polymer.Element {
+      static get is() {
+        return "camomile-login";
+      }
+
+      constructor() {
+        super();
+        this.logged_in=false;
+      }
+
+      _setupEndPoint(camomileInstance) {
+        const url=camomileInstance.url;
+        this.client = new Camomile(url);
+        this.authenticate();
+      }
+
+      _resetEndPoint() {
+        if(this.logged_in)
+          this.logout();
+      }
+
+      ready() {
+        super.ready();
+        const camomileInstance=getElementAt(this.srcEndpoint);
+
+        if(camomileInstance.endPointSet)
+          this._setupEndPoint(camomileInstance);
+        camomileInstance.addEventListener("endpointSet",() => this._setupEndPoint(camomileInstance));
+
+        camomileInstance.addEventListener("endpointReset",() => this._resetEndPoint());
+      }
+
+      authenticate() {
+        return this.client.me().then(({username}) => {
+            this.username=username;
+            this.logged_in=true;
+            return this.dispatchEvent(new CustomEvent('login', {}));
+          })
+          .catch(err => {
+            this.logged_in=false;
+          });
+      }
+
+      login() {
+        return this.client.login(this.shadowRoot.querySelector("#user").value, this.shadowRoot.querySelector("#password").value).then(r => {
+            console.log(r);
+            return this.authenticate();
+          })
+          .catch(e => {
+            console.log(e);
+            this.login_status="Login failed : "+e.message;
+          });
+      }
+
+      logout() {
+        this.client.logout().then(() => {
+          this.logged_in=false;
+          console.log("logout");
+          return this.dispatchEvent(new CustomEvent('logout', {}));
+        })
+      }
+
+      static get properties() {
+        return {
+          srcEndpoint: String,
+          id: String
+        };
+      }
+    }
+    customElements.define(CamomileLogin.is, CamomileLogin);
+  </script>
+
+</dom-module>

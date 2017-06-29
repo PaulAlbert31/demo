@@ -1,0 +1,156 @@
+<link rel="import" href="bower_components/polymer/polymer-element.html">
+<script src="./lib/wavesurfer.min.js"></script>
+<script src="getElementAt.js"></script>
+
+<dom-module id="camomile-wave-player">
+
+  <template>
+    <template is="dom-if" if="{{loading}}">
+      <p>Loading waveform {{loadingProgress}}%...</p>
+    </template>
+    <div id="waveform"></div>
+  </template>
+
+  <script>
+    class CamomileWavePlayer extends Polymer.Element {
+      static get is() {
+        return "camomile-wave-player";
+      }
+
+      constructor() {
+        super();
+        this.loading=false;
+        this.loaded=false;
+      }
+
+      _setupMediumView(mediumView) {
+        this.wavesurfer.load(mediumView.medium_url);
+        this.loading=true;
+        this.wavesurfer.on("ready",() => {
+          this.loading=false;
+          this.loaded=true;
+        });
+        this.wavesurfer.on("loading",(loadingProgress) => {
+          this.loadingProgress=loadingProgress;
+        })
+      }
+
+      _resetMediumView() {
+        this.wavesurfer.empty();
+        this.loading=false;
+        this.loaded=false;
+      }
+
+      ready() {
+        super.ready();
+        this.loading=false;
+
+        this.wavesurfer = WaveSurfer.create({
+          container: this.$.waveform,
+          xhrWithCredentials: true,
+          barHeight:5
+        });
+
+
+        let syncCurrentTime;
+        let syncRange;
+        let syncAll;
+        let syncPlaying;
+
+        if(this.syncAll) {
+          syncAll = getElementAt(this.syncAll);
+
+          if(syncAll.medium) {
+            this._setupMediumView(syncAll);
+          }
+
+          syncAll.addEventListener("ready", () => this._setupMediumView(syncAll));
+          syncAll.addEventListener("reset", () => this._resetMediumView());
+          syncCurrentTime=syncAll;
+          syncRange=syncAll;
+          syncPlaying=syncAll;
+        }
+
+        if(this.syncCurrentTime) {
+          syncCurrentTime = getElementAt(this.syncCurrentTime);
+
+          if(syncCurrentTime.medium) {
+            this._setupMediumView(syncCurrentTime)
+          }
+          syncCurrentTime.addEventListener("ready", () => this._setupMediumView(syncCurrentTime));
+          syncCurrentTime.addEventListener("reset", () => this._resetMediumView());
+        }
+
+        if(this.syncRange) {
+          syncRange = getElementAt(this.syncRange);
+
+          if(syncRange.medium) {
+            this._setupMediumView(syncRange)
+          }
+          syncRange.addEventListener("ready", () => this._setupMediumView(syncRange));
+          syncRange.addEventListener("reset", () => this._resetMediumView());
+        }
+
+        if(this.syncPlaying) {
+          syncPlaying = getElementAt(this.syncPlaying);
+
+          if(syncPlaying.medium) {
+            this._setupMediumView(syncPlaying)
+          }
+          syncPlaying.addEventListener("ready", () => this._setupMediumView(syncPlaying));
+          syncPlaying.addEventListener("reset", () => this._resetMediumView());
+        }
+
+        if(syncCurrentTime) {
+          this.beingSought=false;
+          this.wavesurfer.on("seek",() => {
+            if(this.beingSought)
+              return;
+            syncCurrentTime.publish(this.id,"currentTime",this.wavesurfer.getCurrentTime());
+          });
+
+
+          syncCurrentTime.subscribe(this.id,"currentTime", () => {
+            this.beingSought=true;
+            this.wavesurfer.seekAndCenter(syncCurrentTime.currentTime/this.wavesurfer.getDuration());
+            this.beingSought=false;
+          });
+        }
+
+
+        if(syncRange) {
+          syncRange.subscribe(this.id,"range",() => {
+            if(!this.loaded)
+              return;
+
+            this.wavesurfer.zoom(this.$.waveform.clientWidth/(syncRange.range.end-syncRange.range.start));
+          });
+        }
+
+        if(syncPlaying) {
+          syncPlaying.subscribe(this.id,"playing",(playing) => {
+            if(!this.loaded)
+              return;
+
+            if(playing)
+              this.wavesurfer.play();
+            else
+              this.wavesurfer.pause();
+          });
+        }
+      }
+
+      static get properties() {
+        return {
+          syncCurrentTime: String,
+          syncRange: String,
+          syncAll: String,
+          syncPlaying: String,
+          id: String
+        }
+      }
+    }
+    customElements.define(CamomileWavePlayer.is, CamomileWavePlayer);
+  </script>
+
+</dom-module>

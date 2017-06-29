@@ -1,0 +1,63 @@
+{
+  "_from": "github:rom1504/camomile-client-javascript#patch-1",
+  "_id": "camomile-client@0.8.0",
+  "_inBundle": false,
+  "_integrity": "sha1-26l6TDaeOFCZbcW2ugETOZO5Bio=",
+  "_location": "/camomile-client",
+  "_phantomChildren": {},
+  "_requested": {
+    "type": "git",
+    "raw": "camomile-client@github:rom1504/camomile-client-javascript#patch-1",
+    "name": "camomile-client",
+    "escapedName": "camomile-client",
+    "rawSpec": "github:rom1504/camomile-client-javascript#patch-1",
+    "saveSpec": "github:rom1504/camomile-client-javascript#patch-1",
+    "fetchSpec": null,
+    "gitCommittish": "patch-1"
+  },
+  "_requiredBy": [
+    "#USER",
+    "/"
+  ],
+  "_resolved": "github:rom1504/camomile-client-javascript#7d347704d470a14895048cfb78bb17f71022b9ba",
+  "_spec": "camomile-client@github:rom1504/camomile-client-javascript#patch-1",
+  "_where": "/Users/paulalbert/Documents/projet/videojs-touch/PaulAlbert31.github.io",
+  "author": {
+    "name": "Hervé BREDIN"
+  },
+  "bugs": {
+    "url": "https://github.com/camomile-project/camomile-client-javascript/issues"
+  },
+  "bundleDependencies": false,
+  "dependencies": {
+    "eventsource": "github:rom1504/eventsource#patch-1",
+    "request": "^2.75.0",
+    "request-promise": "^4.1.1"
+  },
+  "deprecated": false,
+  "description": "Javascript client for Camomile REST API",
+  "devDependencies": {
+    "browserify": "^14.3.0",
+    "uglify-es": "^3.0.3"
+  },
+  "homepage": "https://github.com/camomile-project/camomile-client-javascript#readme",
+  "keywords": [
+    "camomile",
+    "client",
+    "annotation",
+    "multimedia",
+    "documents"
+  ],
+  "license": "MIT",
+  "main": "index.js",
+  "name": "camomile-client",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/camomile-project/camomile-client-javascript.git"
+  },
+  "scripts": {
+    "build": "browserify -s Camomile -e ./ | uglifyjs -c warnings=false -m > camomile.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "version": "0.8.0"
+}

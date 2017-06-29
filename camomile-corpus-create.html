@@ -1,0 +1,71 @@
+<link rel="import" href="bower_components/polymer/polymer-element.html">
+<link rel="import" href="src/shared-styles.html">
+<script src="getElementAt.js"></script>
+
+<dom-module id="camomile-corpus-create">
+
+  <template>
+    <style include="shared-styles">
+      :host {
+        display: block;
+        padding: 10px;
+      }
+    </style>
+    <div class="card">
+      <h2>Corpus creation</h2>
+      <form>
+        <paper-input label="Name" type="text" id="name" required></paper-input>
+        <paper-input label="License" type="text" id="license" required></paper-input>
+        <paper-button raised class="indigo" on-click="create">Create</paper-button>
+      </form>
+      {{creation_status}}
+    </div>
+  </template>
+
+  <script>
+    class CamomileCorpusCreate extends Polymer.Element {
+      static get is() {
+        return "camomile-corpus-create";
+      }
+
+      constructor() {
+        super();
+      }
+
+      _setupClient(loginInstance) {
+        this.client = loginInstance.client;
+      }
+
+      _resetClient() {
+        this.client = null;
+      }
+
+      ready() {
+        super.ready();
+
+        const loginInstance = getElementAt(this.srcLogin);
+
+        if(loginInstance.logged_in)
+          this._setupClient(loginInstance);
+        loginInstance.addEventListener("login",() => this._setupClient(loginInstance));
+        loginInstance.addEventListener("logout", () => this._resetClient());
+      }
+
+      create(e) {
+        e.preventDefault();
+        this.client.createCorpus(this.$.name.value, {license: this.$.license.value})
+          .then(() => this.creation_status="Creation succeeded.")
+          .catch(e => this.creation_status="Creation failed : "+e.message);
+      }
+
+      static get properties() {
+        return {
+          srcLogin: String,
+          id: String
+        };
+      }
+    }
+    customElements.define(CamomileCorpusCreate.is, CamomileCorpusCreate);
+  </script>
+
+</dom-module>

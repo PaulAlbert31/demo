@@ -1,0 +1,110 @@
+<link rel="import" href="bower_components/polymer/polymer-element.html">
+<script src="getElementAt.js"></script>
+
+<dom-module id="camomile-touch-player">
+
+  <template>
+    <video id="video" width="640" height="480" controls>
+      <source src="{{medium_url}}" type="video/{{format}}">
+    </video>
+  </template>
+
+  <script>
+    class CamomilePlayer extends Polymer.Element {
+      static get is() {
+        return "camomile-touch-player";
+      }
+
+      constructor() {
+        super();
+      }
+
+      _setupMediumView(mediumView) {
+        console.log("setting player",this.id,"to",mediumView.medium_url);
+        this.medium_url = mediumView.medium_url;
+        this.format = mediumView.format;
+        this.$.video.load();
+      }
+
+      _resetMediumView() {
+        console.log("reset player",this.id);
+        this.medium_url="";
+        this.format="";
+        this.$.video.load();
+      }
+
+      ready() {
+        super.ready();
+
+        let syncCurrentTime;
+        let syncAll;
+        let syncPlaying;
+        this.video=this.$.video;
+
+        if(this.syncAll) {
+          syncAll = getElementAt(this.syncAll);
+
+          if(syncAll.medium) {
+            this._setupMediumView(syncAll);
+          }
+
+          syncAll.addEventListener("ready", () => this._setupMediumView(syncAll));
+          syncAll.addEventListener("reset", () => this._resetMediumView());
+          syncCurrentTime=syncAll;
+          syncPlaying=syncAll;
+        }
+
+        if(this.syncCurrentTime) {
+          syncCurrentTime = getElementAt(this.syncCurrentTime);
+
+          if(syncCurrentTime.medium) {
+            this._setupMediumView(syncCurrentTime)
+          }
+          syncCurrentTime.addEventListener("ready", () => this._setupMediumView(syncCurrentTime));
+          syncCurrentTime.addEventListener("reset", () => this._resetMediumView());
+        }
+
+        if(this.syncPlaying) {
+          syncPlaying = getElementAt(this.syncPlaying);
+
+          if(syncPlaying.medium) {
+            this._setupMediumView(syncPlaying)
+          }
+          syncPlaying.addEventListener("ready", () => this._setupMediumView(syncPlaying));
+          syncPlaying.addEventListener("reset", () => this._resetMediumView());
+        }
+
+        if(syncCurrentTime) {
+          this.video.addEventListener("timeupdate",() => {
+            syncCurrentTime.publish(this.id,"currentTime",this.video.currentTime);
+          });
+
+          syncCurrentTime.subscribe(this.id,"currentTime",() => {
+            this.video.currentTime=syncCurrentTime.currentTime;
+          });
+        }
+
+
+        if(syncPlaying) {
+          this.video.addEventListener("play", () => {
+            syncPlaying.publish(this.id,"playing",true);
+          });
+          this.video.addEventListener("pause", () => {
+            syncPlaying.publish(this.id,"playing",false);
+          });
+        }
+      }
+
+      static get properties() {
+        return {
+          syncCurrentTime: String,
+          syncPlaying: String,
+          syncAll: String,
+          id: String
+        }
+      }
+    }
+    customElements.define(CamomilePlayer.is, CamomilePlayer);
+  </script>
+
+</dom-module>

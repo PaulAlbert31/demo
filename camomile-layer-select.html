@@ -1,0 +1,111 @@
+<link rel="import" href="bower_components/polymer/polymer-element.html">
+<link rel="import" href="bower_components/polymer/lib/elements/dom-repeat.html">
+<script src="cookie.js"></script>
+<script src="getElementAt.js"></script>
+
+<dom-module id="camomile-layer-select">
+
+  <template>
+    <paper-dropdown-menu-light label="Layer" id="layer">
+      <paper-listbox slot="dropdown-content" class="dropdown-content" selected="{{layer}}" attr-for-selected="id">
+        <template is="dom-repeat" items="{{layers}}">
+          <paper-item id="{{item._id}}">{{item.name}}</paper-item>
+        </template>
+      </paper-listbox>
+    </paper-dropdown-menu-light>
+  </template>
+
+  <script>
+    class CamomileLayerSelect extends Polymer.Element {
+      static get is() {
+        return "camomile-layer-select";
+      }
+
+      constructor() {
+        super();
+      }
+
+      _setupCorpus(corpusInstance) {
+        if(this.corpus) {
+          this.client.unwatchCorpus(this.corpus);
+          this.dispatchEvent(new CustomEvent('deselect', {}));
+          setCookie("layer","",0);
+        }
+
+        this.client = corpusInstance.client;
+        this.corpus=corpusInstance.corpus;
+
+        this._populateLayers(corpusInstance.corpus).then(() => {
+          setTimeout(() => {
+            const v=getCookie("layer");
+            if(v!=="") {
+              this.layer=v;
+            }
+          },0);
+        });
+
+        this.client.watchCorpus(corpusInstance.corpus, () => {
+          this._populateLayers(corpusInstance.corpus);
+        });
+      }
+
+      _resetCorpus() {
+        this.client=null;
+        this.layers=[];
+        this.corpus=null;
+        this.layer=null;
+        setCookie("layer","",0);
+
+
+        this.dispatchEvent(new CustomEvent('deselect', {}));
+      }
+
+      ready() {
+        super.ready();
+
+        const corpusInstance = getElementAt(this.srcCorpus);
+
+        if(corpusInstance.corpus)
+          this._setupCorpus(corpusInstance);
+        corpusInstance.addEventListener("select", () => this._setupCorpus(corpusInstance));
+
+        corpusInstance.addEventListener("deselect", () => this._resetCorpus());
+
+      }
+
+      _populateLayers(corpus) {
+        return this.client.getLayers({filter: {'id_corpus': corpus}})
+          .then(data => {
+            console.log("layers",data);
+            this.layers = data;
+          })
+          .catch(err => {
+            console.log(err);
+          });
+      }
+
+      selectLayer(layer) {
+        console.log("layer", layer);
+        this.dispatchEvent(new CustomEvent('select', {}));
+      }
+
+      _layerChanged() {
+        setCookie("layer",this.layer,10);
+        this.selectLayer(this.layer);
+      }
+
+      static get properties() {
+        return {
+          srcCorpus: String,
+          id: String,
+          layer:{
+            type:String,
+            observer:'_layerChanged'
+          }
+        };
+      }
+    }
+    customElements.define(CamomileLayerSelect.is, CamomileLayerSelect);
+  </script>
+
+</dom-module>

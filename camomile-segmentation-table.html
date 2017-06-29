@@ -1,0 +1,69 @@
+<link rel="import" href="bower_components/polymer/polymer-element.html">
+<link rel="import" href="bower_components/polymer/lib/elements/dom-repeat.html">
+
+<script src="getElementAt.js"></script>
+
+<dom-module id="camomile-segmentation-table">
+
+  <template>
+    <table>
+      <tr><th>Beginning</th><th>End</th><th>Label</th></tr>
+      <template is="dom-repeat" items="{{annotations}}">
+        <tr><td>{{item.fragment.start}}</td><td>{{item.fragment.end}}</td><td>{{item.data}}</td></tr>
+      </template>
+    </table>
+  </template>
+
+  <script>
+    class CamomileSegmentationTable extends Polymer.Element {
+      static get is() {
+        return "camomile-segmentation-table";
+      }
+
+      constructor() {
+        super();
+      }
+
+      ready() {
+        super.ready();
+
+        const layerState = getElementAt(this.srcLayerState);
+
+
+        layerState.addEventListener("populate_annotations",({detail:{data}}) => {
+          this.annotations=JSON.parse(JSON.stringify(data));
+          this.annotations.sort((a,b) => a.fragment.start - b.fragment.start);
+        });
+        layerState.addEventListener("reset_annotations",() => {
+          this.annotations=null;
+        });
+
+        layerState.addEventListener("add_annotation",({detail:{data}}) => {
+          const annotationIndex=this.annotations.findIndex(annotation => annotation._id===data._id);
+          if(annotationIndex!==-1)
+            return;
+          this.push("annotations",data);
+          this.annotations.sort((a,b) => a.fragment.start - b.fragment.start);
+        });
+        layerState.addEventListener("update_annotation",({detail:{data}}) => {
+          const annotationIndex=this.annotations.findIndex(annotation => annotation._id===data._id);
+          this.splice("annotations", annotationIndex, 1,data);
+          this.annotations.sort((a,b) => a.fragment.start - b.fragment.start);
+        });
+        layerState.addEventListener("delete_annotation",({detail:{id}}) => {
+          const annotationIndex=this.annotations.findIndex(annotation => annotation._id===id);
+          this.splice("annotations", annotationIndex, 1);
+        });
+      }
+
+      static get properties() {
+        return {
+          srcLayerState: String,
+          id: String
+        };
+      }
+    }
+    customElements.define(CamomileSegmentationTable.is, CamomileSegmentationTable);
+  </script>
+
+</dom-module>
